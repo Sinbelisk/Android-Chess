@@ -15,6 +15,7 @@ class ChessBoardView @JvmOverloads constructor(
 
     private val paint = Paint()
     private val board = ChessBoard()
+    private val controller = ChessController(board)
 
     private val boardSize = 8
     private var cellSize: Int = 0
@@ -24,12 +25,12 @@ class ChessBoardView @JvmOverloads constructor(
     private val darkColor = Color.DKGRAY
     private val selectedColor = Color.YELLOW
 
-    // Estado de interacción
-    private var selectedRow: Int? = null
-    private var selectedCol: Int? = null
-
-    // Listener para eventos de interacción
-    var onPieceMoved: ((fromRow: Int, fromCol: Int, toRow: Int, toCol: Int) -> Unit)? = null
+    init {
+        // Pasar el callback al controlador
+        controller.onPieceMoved = { fromRow, fromCol, toRow, toCol ->
+            invalidate() // Redibujar la vista tras mover una pieza
+        }
+    }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -44,6 +45,7 @@ class ChessBoardView @JvmOverloads constructor(
     private fun drawBoard(canvas: Canvas) {
         for (row in 0 until boardSize) {
             for (col in 0 until boardSize) {
+                val (selectedRow, selectedCol) = controller.getSelectedCell()
                 paint.color = when {
                     row == selectedRow && col == selectedCol -> selectedColor
                     (row + col) % 2 == 0 -> lightColor
@@ -89,32 +91,13 @@ class ChessBoardView @JvmOverloads constructor(
             val row = (event.y / cellSize).toInt()
 
             if (board.isValidPosition(row, col)) {
-                handleCellTouch(row, col)
+                controller.handleCellTouch(row, col)
+                invalidate() // Redibujar la vista
                 return true
             }
         }
         return super.onTouchEvent(event)
     }
-
-    private fun handleCellTouch(row: Int, col: Int) {
-        val piece = board.getPieceAt(row, col)
-
-        if (selectedRow != null && selectedCol != null) {
-            // Mover la pieza seleccionada
-            val fromRow = selectedRow!!
-            val fromCol = selectedCol!!
-            if (board.movePiece(fromRow, fromCol, row, col)) {
-                onPieceMoved?.invoke(fromRow, fromCol, row, col)
-            }
-            selectedRow = null
-            selectedCol = null
-        } else if (piece != null) {
-            // Seleccionar una pieza
-            selectedRow = row
-            selectedCol = col
-        }
-
-        invalidate() // Redibujar la vista
-    }
 }
+
 
