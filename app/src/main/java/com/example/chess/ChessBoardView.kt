@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.os.CountDownTimer
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -29,6 +30,12 @@ class ChessBoardView @JvmOverloads constructor(
     // Control de turnos
     private var isWhiteTurn = true
 
+
+    private var turnTimer: CountDownTimer? = null
+    private val turnTimeLimit = 600000L // 600 segundos (10 minutos)
+    private var timeLeft: Long = turnTimeLimit // Tiempo restante en milisegundos
+    private var timeText: String = "10:00" // Texto para mostrar el tiempo restante
+
     init {
         controller.onPieceMoved = { _, _, _, _ ->
             checkForWin() // Verificar si alguien ha ganado después de cada movimiento
@@ -37,7 +44,8 @@ class ChessBoardView @JvmOverloads constructor(
 
         controller.onTurnChanged = { isWhite ->
             isWhiteTurn = isWhite
-            invalidate() // Actualizar la vista para reflejar el cambio de turno
+            resetTurnTimer() // Reiniciar el cronómetro al cambiar de turno
+            invalidate() // Actualizar la vista
         }
     }
 
@@ -51,7 +59,18 @@ class ChessBoardView @JvmOverloads constructor(
         drawPieces(canvas)
         // Mostrar indicador de turno
         drawTurnIndicator(canvas)
+
+        // Mostrar el tiempo restante
+        drawTimeRemaining(canvas)
     }
+
+    private fun drawTimeRemaining(canvas: Canvas) {
+        paint.textSize = 50f
+        paint.color = Color.WHITE
+        paint.textAlign = Paint.Align.CENTER
+        canvas.drawText(timeText, width / 2f, 60f, paint) // Mostrar el tiempo en la parte superior central
+    }
+
 
     private fun drawBoard(canvas: Canvas) {
         for (row in 0 until boardSize) {
@@ -127,6 +146,33 @@ class ChessBoardView @JvmOverloads constructor(
             .setCancelable(false)
             .show()
     }
+
+    private fun resetTurnTimer() {
+        turnTimer?.cancel() // Cancelar cualquier cronómetro previo
+
+        timeLeft = turnTimeLimit // Resetear el tiempo a 10 minutos
+        updateTimeText() // Actualizar el texto con el tiempo restante
+
+        turnTimer = object : CountDownTimer(timeLeft, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                timeLeft = millisUntilFinished
+                updateTimeText() // Actualizar el tiempo restante cada segundo
+                invalidate() // Redibujar la vista
+            }
+
+            override fun onFinish() {
+                val losingPlayer = if (isWhiteTurn) "Blancas" else "Negras"
+                showGameOverDialog("¡Tiempo agotado! $losingPlayer pierde la partida.")
+            }
+        }.start()
+    }
+
+    private fun updateTimeText() {
+        val minutes = (timeLeft / 1000) / 60
+        val seconds = (timeLeft / 1000) % 60
+        timeText = String.format("%02d:%02d", minutes, seconds)
+    }
+
 }
 
 
