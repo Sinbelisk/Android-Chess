@@ -26,11 +26,18 @@ class ChessBoardView @JvmOverloads constructor(
     private val darkColor = Color.DKGRAY
     private val selectedColor = Color.YELLOW
 
+    // Control de turnos
+    private var isWhiteTurn = true
+
     init {
-        // Pasar el callback al controlador
         controller.onPieceMoved = { _, _, _, _ ->
             checkForWin() // Verificar si alguien ha ganado después de cada movimiento
             invalidate() // Redibujar la vista tras mover una pieza
+        }
+
+        controller.onTurnChanged = { isWhite ->
+            isWhiteTurn = isWhite
+            invalidate() // Actualizar la vista para reflejar el cambio de turno
         }
     }
 
@@ -42,6 +49,8 @@ class ChessBoardView @JvmOverloads constructor(
         drawBoard(canvas)
         // Dibujar las piezas
         drawPieces(canvas)
+        // Mostrar indicador de turno
+        drawTurnIndicator(canvas)
     }
 
     private fun drawBoard(canvas: Canvas) {
@@ -81,10 +90,12 @@ class ChessBoardView @JvmOverloads constructor(
         }
     }
 
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        // Asegurar que el tablero sea cuadrado
-        val size = MeasureSpec.getSize(widthMeasureSpec).coerceAtMost(MeasureSpec.getSize(heightMeasureSpec))
-        setMeasuredDimension(size, size)
+    private fun drawTurnIndicator(canvas: Canvas) {
+        paint.textSize = 50f
+        paint.color = Color.WHITE
+        paint.textAlign = Paint.Align.LEFT
+        val message = if (isWhiteTurn) "Turno: Blancas" else "Turno: Negras"
+        canvas.drawText(message, 20f, height - 20f, paint)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -117,5 +128,6 @@ class ChessBoardView @JvmOverloads constructor(
             .show()
     }
 }
+
 
 
