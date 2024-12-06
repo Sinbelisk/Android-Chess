@@ -30,11 +30,13 @@ class ChessBoardView @JvmOverloads constructor(
     // Control de turnos
     private var isWhiteTurn = true
 
-
-    private var turnTimer: CountDownTimer? = null
-    private val turnTimeLimit = 600000L // 600 segundos (10 minutos)
-    private var timeLeft: Long = turnTimeLimit // Tiempo restante en milisegundos
-    private var timeText: String = "10:00" // Texto para mostrar el tiempo restante
+    private var whiteTurnTimer: CountDownTimer? = null
+    private var blackTurnTimer: CountDownTimer? = null
+    private val turnTimeLimit = 300000L // 5 minutos (300 segundos)
+    private var whiteTimeLeft: Long = turnTimeLimit
+    private var blackTimeLeft: Long = turnTimeLimit
+    private var whiteTimeText: String = "05:00"
+    private var blackTimeText: String = "05:00"
 
     init {
         controller.onPieceMoved = { _, _, _, _ ->
@@ -44,7 +46,11 @@ class ChessBoardView @JvmOverloads constructor(
 
         controller.onTurnChanged = { isWhite ->
             isWhiteTurn = isWhite
-            resetTurnTimer() // Reiniciar el cronómetro al cambiar de turno
+            if (isWhite) {
+                startWhiteTimer() // Empezar el temporizador de las blancas
+            } else {
+                startBlackTimer() // Empezar el temporizador de las negras
+            }
             invalidate() // Actualizar la vista
         }
     }
@@ -61,14 +67,17 @@ class ChessBoardView @JvmOverloads constructor(
         drawTurnIndicator(canvas)
 
         // Mostrar el tiempo restante
-        drawTimeRemaining(canvas)
+        drawTimers(canvas)
     }
 
-    private fun drawTimeRemaining(canvas: Canvas) {
+    private fun drawTimers(canvas: Canvas) {
         paint.textSize = 50f
         paint.color = Color.WHITE
-        paint.textAlign = Paint.Align.CENTER
-        canvas.drawText(timeText, width / 2f, 60f, paint) // Mostrar el tiempo en la parte superior central
+        paint.textAlign = Paint.Align.LEFT
+        canvas.drawText("Blancas: $whiteTimeText", 20f, height - 60f, paint)
+
+        paint.textAlign = Paint.Align.RIGHT
+        canvas.drawText("Negras: $blackTimeText", width - 20f, height - 60f, paint)
     }
 
 
@@ -147,32 +156,57 @@ class ChessBoardView @JvmOverloads constructor(
             .show()
     }
 
-    private fun resetTurnTimer() {
-        turnTimer?.cancel() // Cancelar cualquier cronómetro previo
+    private fun startWhiteTimer() {
+        blackTurnTimer?.cancel() // Detener el temporizador de las negras
+        whiteTurnTimer?.cancel() // Reiniciar el temporizador de las blancas
 
-        timeLeft = turnTimeLimit // Resetear el tiempo a 10 minutos
-        updateTimeText() // Actualizar el texto con el tiempo restante
+        whiteTimeLeft = turnTimeLimit // Reiniciar el tiempo de las blancas
+        updateWhiteTimeText()
 
-        turnTimer = object : CountDownTimer(timeLeft, 1000) {
+        whiteTurnTimer = object : CountDownTimer(whiteTimeLeft, 1000) {
             override fun onTick(millisUntilFinished: Long) {
-                timeLeft = millisUntilFinished
-                updateTimeText() // Actualizar el tiempo restante cada segundo
+                whiteTimeLeft = millisUntilFinished
+                updateWhiteTimeText()
                 invalidate() // Redibujar la vista
             }
 
             override fun onFinish() {
-                val losingPlayer = if (isWhiteTurn) "Blancas" else "Negras"
-                showGameOverDialog("¡Tiempo agotado! $losingPlayer pierde la partida.")
+                showGameOverDialog("¡Las negras ganan! El tiempo de las blancas ha agotado.")
             }
         }.start()
     }
 
-    private fun updateTimeText() {
-        val minutes = (timeLeft / 1000) / 60
-        val seconds = (timeLeft / 1000) % 60
-        timeText = String.format("%02d:%02d", minutes, seconds)
+    private fun startBlackTimer() {
+        whiteTurnTimer?.cancel() // Detener el temporizador de las blancas
+        blackTurnTimer?.cancel() // Reiniciar el temporizador de las negras
+
+        blackTimeLeft = turnTimeLimit // Reiniciar el tiempo de las negras
+        updateBlackTimeText()
+
+        blackTurnTimer = object : CountDownTimer(blackTimeLeft, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                blackTimeLeft = millisUntilFinished
+                updateBlackTimeText()
+                invalidate() // Redibujar la vista
+            }
+
+            override fun onFinish() {
+                showGameOverDialog("¡Las blancas ganan! El tiempo de las negras ha agotado.")
+            }
+        }.start()
     }
 
+    private fun updateWhiteTimeText() {
+        val minutes = (whiteTimeLeft / 1000) / 60
+        val seconds = (whiteTimeLeft / 1000) % 60
+        whiteTimeText = String.format("%02d:%02d", minutes, seconds)
+    }
+
+    private fun updateBlackTimeText() {
+        val minutes = (blackTimeLeft / 1000) / 60
+        val seconds = (blackTimeLeft / 1000) % 60
+        blackTimeText = String.format("%02d:%02d", minutes, seconds)
+    }
 }
 
 
