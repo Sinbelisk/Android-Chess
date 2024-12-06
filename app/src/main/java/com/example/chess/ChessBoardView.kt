@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import androidx.appcompat.app.AlertDialog
 
 class ChessBoardView @JvmOverloads constructor(
     context: Context,
@@ -27,7 +28,8 @@ class ChessBoardView @JvmOverloads constructor(
 
     init {
         // Pasar el callback al controlador
-        controller.onPieceMoved = { fromRow, fromCol, toRow, toCol ->
+        controller.onPieceMoved = { _, _, _, _ ->
+            checkForWin() // Verificar si alguien ha ganado después de cada movimiento
             invalidate() // Redibujar la vista tras mover una pieza
         }
     }
@@ -97,6 +99,22 @@ class ChessBoardView @JvmOverloads constructor(
             }
         }
         return super.onTouchEvent(event)
+    }
+
+    private fun checkForWin() {
+        when {
+            board.hasLost(true) -> showGameOverDialog("¡Las negras ganan!")
+            board.hasLost(false) -> showGameOverDialog("¡Las blancas ganan!")
+        }
+    }
+
+    private fun showGameOverDialog(message: String) {
+        AlertDialog.Builder(context)
+            .setTitle("Fin del juego")
+            .setMessage(message)
+            .setPositiveButton("Reiniciar") { _, _ -> board.resetBoard(); invalidate() }
+            .setCancelable(false)
+            .show()
     }
 }
 

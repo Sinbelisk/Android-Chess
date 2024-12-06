@@ -10,6 +10,10 @@ class ChessBoard {
         setupBoard()
     }
 
+    // Contadores de piezas por equipo
+    private var whitePieceCount = 16
+    private var blackPieceCount = 16
+
     // Inicializa el tablero con las piezas en su posición inicial
     private fun setupBoard() {
         // Peones y piezas blancas
@@ -34,6 +38,8 @@ class ChessBoard {
                 boardMatrix[row][col] = null
             }
         }
+        whitePieceCount = 16
+        blackPieceCount = 16
         setupBoard()
     }
 
@@ -44,18 +50,34 @@ class ChessBoard {
 
     // Mueve una pieza de una posición a otra
     fun movePiece(fromRow: Int, fromCol: Int, toRow: Int, toCol: Int): Boolean {
-        if (!isValidPosition(fromRow, fromCol) || !isValidPosition(toRow, toCol)) {
-            return false
-        }
+        if (!isValidPosition(fromRow, fromCol) || !isValidPosition(toRow, toCol)) return false
 
         val piece = boardMatrix[fromRow][fromCol]
         if (piece != null) {
+            // Capturar pieza si existe en destino
+            val targetPiece = boardMatrix[toRow][toCol]
+            targetPiece?.let {
+                if (it.isWhite()) {
+                    whitePieceCount--
+                } else {
+                    blackPieceCount--
+                }
+            }
+
+            // Mover pieza
             boardMatrix[toRow][toCol] = piece
             boardMatrix[fromRow][fromCol] = null
+
             return true
         }
         return false
     }
+
+    // Obtiene la cantidad de piezas por equipo
+    fun getPieceCount(isWhite: Boolean): Int = if (isWhite) whitePieceCount else blackPieceCount
+
+    // Comprueba si un equipo ha perdido todas sus piezas
+    fun hasLost(isWhite: Boolean): Boolean = getPieceCount(isWhite) == 0
 
     // Comprueba si una posición está vacía
     fun isEmpty(row: Int, col: Int): Boolean {
