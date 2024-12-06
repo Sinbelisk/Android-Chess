@@ -4,9 +4,6 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.media.AudioManager
-import android.media.SoundPool
-import android.os.Build
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -18,7 +15,7 @@ class ChessBoardView @JvmOverloads constructor(
 
     private val paint = Paint()
     private val board = ChessBoard()
-    private val controller = ChessController(board)
+    private val controller = ChessController(board, context)
 
     private val boardSize = 8
     private var cellSize: Int = 0

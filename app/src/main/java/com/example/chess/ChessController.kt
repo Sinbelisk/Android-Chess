@@ -1,6 +1,10 @@
 package com.example.chess
 
-class ChessController(private val board: ChessBoard) {
+import android.content.Context
+import android.media.AudioAttributes
+import android.media.SoundPool
+
+class ChessController(private val board: ChessBoard, context: Context) {
 
     // Estado de interacción
     private var selectedRow: Int? = null
@@ -12,6 +16,35 @@ class ChessController(private val board: ChessBoard) {
     // Listener para eventos de interacción
     var onPieceMoved: ((fromRow: Int, fromCol: Int, toRow: Int, toCol: Int) -> Unit)? = null
     var onTurnChanged: ((isWhiteTurn: Boolean) -> Unit)? = null
+
+    // SoundPool para manejar los sonidos
+    private val soundPool: SoundPool
+    private val soundMap: MutableMap<Int, Int> = mutableMapOf()
+
+    init {
+        // Inicializar SoundPool con atributos
+        val attributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_GAME)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+
+        soundPool = SoundPool.Builder()
+            .setMaxStreams(5)
+            .setAudioAttributes(attributes)
+            .build()
+
+        // Cargar los sonidos de cada tipo de pieza
+        loadSounds(context)
+    }
+
+    private fun loadSounds(context: Context) {
+        soundMap[1] = soundPool.load(context, R.raw.pawn_move, 1) // Sonido de peón
+        soundMap[2] = soundPool.load(context, R.raw.rook_move, 1) // Sonido de torre
+        soundMap[3] = soundPool.load(context, R.raw.knight_move, 1) // Sonido de caballo
+        soundMap[4] = soundPool.load(context, R.raw.bishop_move, 1) // Sonido de alfil
+        soundMap[5] = soundPool.load(context, R.raw.queen_move, 1) // Sonido de reina
+        soundMap[6] = soundPool.load(context, R.raw.king_move, 1) // Sonido de rey
+    }
 
     // Maneja los eventos táctiles en el tablero
     fun handleCellTouch(row: Int, col: Int) {
@@ -26,6 +59,7 @@ class ChessController(private val board: ChessBoard) {
             if (selectedPiece != null && isValidMove(selectedPiece, row, col)) {
                 if (board.movePiece(fromRow, fromCol, row, col)) {
                     onPieceMoved?.invoke(fromRow, fromCol, row, col)
+                    playMoveSound(selectedPiece) // Reproducir el sonido correspondiente a la pieza
                     changeTurn() // Cambiar el turno después de un movimiento exitoso
                 }
             }
@@ -37,6 +71,15 @@ class ChessController(private val board: ChessBoard) {
             selectedCol = col
         }
     }
+
+    // Reproduce el sonido correspondiente al tipo de pieza
+    private fun playMoveSound(piece: ChessPiece) {
+        val soundId = soundMap[piece.type]
+        soundId?.let {
+            soundPool.play(it, 1f, 1f, 0, 0, 1f)
+        }
+    }
+
 
     // Comprueba si una pieza pertenece al jugador actual
     private fun isCurrentPlayerPiece(piece: ChessPiece): Boolean {
