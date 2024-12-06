@@ -32,7 +32,7 @@ class ChessBoardView @JvmOverloads constructor(
 
     private var whiteTurnTimer: CountDownTimer? = null
     private var blackTurnTimer: CountDownTimer? = null
-    private val turnTimeLimit = 300000L // 5 minutos (300 segundos)
+    private val turnTimeLimit = 3000L // 5 minutos (300 segundos)
     private var whiteTimeLeft: Long = turnTimeLimit
     private var blackTimeLeft: Long = turnTimeLimit
     private var whiteTimeText: String = "05:00"
