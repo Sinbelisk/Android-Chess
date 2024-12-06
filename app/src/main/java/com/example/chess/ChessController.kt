@@ -3,6 +3,7 @@ package com.example.chess
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.SoundPool
+import kotlin.math.abs
 
 class ChessController(private val board: ChessBoard, context: Context) {
 
@@ -72,9 +73,9 @@ class ChessController(private val board: ChessBoard, context: Context) {
         }
     }
 
-    // Reproduce el sonido correspondiente al tipo de pieza
     private fun playMoveSound(piece: ChessPiece) {
-        val soundId = soundMap[piece.type]
+        // Usar el valor absoluto de 'type' para encontrar el sonido adecuado
+        val soundId = soundMap[abs(piece.type)]
         soundId?.let {
             soundPool.play(it, 1f, 1f, 0, 0, 1f)
         }
